@@ -1,9 +1,23 @@
 # -*- coding: utf-8 -*-
+import logging
 from datetime import datetime
+
 import requests
 import telebot
 from pycbrf import ExchangeRates
 from MapsAPI import MapAPI
+import os
+from flask import Flask, request
+
+server = Flask(__name__)
+
+PORT = int(os.environ.get('PORT', 5000))
+TOKEN = "1719349692:AAHNGDF0WeCkGXy3Ef8uWuYXtWmzQF4VypE"
+HEROKU_APP_NAME = "mapsapibot"
+url = 'http://api.openweathermap.org/data/2.5/weather'
+api_weather = 'e4a3da131fe7dd1aa4d06d1ded5c6963'
+bot = telebot.TeleBot(TOKEN)
+map_api = MapAPI()
 
 main_markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 btn1 = telebot.types.KeyboardButton("/weather⛅")
@@ -23,12 +37,6 @@ item4 = telebot.types.KeyboardButton('USD💵')
 currency_back = telebot.types.KeyboardButton('Back⬅')
 currency_markup.row(item1, item2, item3, item4)
 currency_markup.add(currency_back)
-
-TOKEN = "1719349692:AAHNGDF0WeCkGXy3Ef8uWuYXtWmzQF4VypE"
-url = 'http://api.openweathermap.org/data/2.5/weather'
-api_weather = 'e4a3da131fe7dd1aa4d06d1ded5c6963'
-bot = telebot.TeleBot(TOKEN)
-map_api = MapAPI()
 
 
 @bot.message_handler(commands=["start"])
@@ -124,7 +132,7 @@ def exchange_rate(message):
 def dialog(message):
     text = message.text.strip().lower()
     if text.startswith('/'):
-        bot.send_message(message.chat.id, f"Бот не обладает командой: {text}", reply_markup=main_markup)
+        bot.send_message(message.chat.id, f'Бот не обладает командой "{text}"', reply_markup=main_markup)
         return
     if text in ['stop', 'back', 'back⬅']:
         bot.send_message(message.chat.id, "Нет запущенной комманды на данный момент", reply_markup=main_markup)
@@ -148,5 +156,20 @@ def dialog(message):
         bot.send_photo(message.chat.id, im, caption=description)
 
 
+@server.route('/' + TOKEN, methods=['POST'])
+def getMessage():
+    json_string = request.get_data().decode('utf-8')
+    update = telebot.types.Update.de_json(json_string)
+    bot.process_new_updates([update])
+    return "!", 200
+
+
+@server.route("/")
+def webhook():
+    bot.remove_webhook()
+    bot.set_webhook(url=f"https://{HEROKU_APP_NAME}.herokuapp.com/{TOKEN}")
+    return "?", 200
+
+
 if __name__ == '__main__':
-    bot.polling(none_stop=True)
+    server.run(host="0.0.0.0", port=PORT)

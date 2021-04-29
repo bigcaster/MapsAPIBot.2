@@ -1,5 +1,5 @@
 import requests
-from serversAndParams import static_api_server, geocode_api_server, places_api_server, format_keys, format_values
+from ServersAndParams import static_api_server, geocode_api_server, places_api_server, format_keys, format_values
 import copy
 
 
@@ -183,7 +183,7 @@ Http статус: {places_response.status_code} ({places_response.reason})"""
         return features
 
     def reset_params(self):
-        from serversAndParams import static_params, geocoder_params, places_params
+        from ServersAndParams import static_params, geocoder_params, places_params
         self.static_params = copy.deepcopy(static_params)
         self.geocoder_params = copy.deepcopy(geocoder_params)
         self.places_params = copy.deepcopy(places_params)
